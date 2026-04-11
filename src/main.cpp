@@ -14,6 +14,24 @@
 #include "task_webserver.h"
 #include "task_core_iot.h"
 
+
+// System Task
+void system_monitor_task(void *pvParameters) {
+  while (1) {
+    if (check_info_File(1)) {
+      if (!Wifi_reconnect()) {
+        Webserver_stop();
+      } else {
+        //CORE_IOT_reconnect();
+      }
+    }
+    Webserver_reconnect();
+    
+    // avoid Watchdog Reset
+    vTaskDelay(pdMS_TO_TICKS(100)); 
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -31,6 +49,7 @@ void setup()
   // xTaskCreate( tiny_ml_task, "Tiny ML Task" ,2048  ,NULL  ,2 , NULL);
   xTaskCreate(coreiot_task, "CoreIOT Task" ,4096  ,NULL  ,2 , NULL);
   // xTaskCreate(Task_Toogle_BOOT, "Task_Toogle_BOOT", 4096, NULL, 2, NULL);
+  xTaskCreate(system_monitor_task, "System Monitor", 4096, NULL, 1, NULL);
 }
 
 void loop()
@@ -48,3 +67,4 @@ void loop()
   }
   Webserver_reconnect();
 }
+
