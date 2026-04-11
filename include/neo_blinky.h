@@ -2,7 +2,8 @@
 #define __NEO_BLINKY__
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-
+//#include "freertos/semphr.h"
+//#include "freertos/queue.h"
 
 
 #define NEO_PIN 45
