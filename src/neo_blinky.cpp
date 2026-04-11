@@ -2,7 +2,8 @@
 
 void neo_blinky(void *pvParameters){
 
-    QueueHandle_t humidityQueue = (QueueHandle_t)pvParameters;
+    QueueHandle_t queue = (QueueHandle_t)pvParameters;
+    SensorData_t receivedData;
 
     Adafruit_NeoPixel strip(LED_COUNT, NEO_PIN, NEO_GRB + NEO_KHZ800);
     strip.begin();
@@ -30,7 +31,9 @@ void neo_blinky(void *pvParameters){
         // Wait for another 500 milliseconds
         vTaskDelay(500);
         */                    
-        if (xQueueReceive(humidityQueue, &current_humidity, 0)) {
+        if (xQueuePeek(queue, &receivedData, 0) == pdTRUE) {
+
+            current_humidity = receivedData.humidity;
             if (current_humidity < 40.0) {
                 current_color = strip.Color(255, 0, 0); // set pixel 0 to red
                 led_is_on = true;

@@ -8,9 +8,9 @@ void temp_humi_monitor(void *pvParameters){
     Wire.begin(11, 12);
     Serial.begin(115200);
     dht20.begin();
-
+    /*
     while (1){
-        /* code 
+         code 
         
         dht20.read();
         // Reading temperature in Celsius
@@ -40,19 +40,28 @@ void temp_humi_monitor(void *pvParameters){
         Serial.println("°C");
         
         vTaskDelay(5000);
-        */
-        // Task2
-        QueueHandle_t queue = (QueueHandle_t)pvParameters;
-        while (1) {
-            float new_humidity = dht20.getHumidity();
-            if (isnan(new_humidity)) {
-                Serial.println("Failed to read from DHT sensor!");
-                new_humidity =  -1;
-                //return;
-            }
-            xQueueOverwrite(queue, &new_humidity);
-            vTaskDelay(pdMS_TO_TICKS(10000));
+        
+    }*/
+    // Read temp & humi 
+    QueueHandle_t queue = (QueueHandle_t)pvParameters;
+    SensorData_t data; 
+
+    while(1) {
+        dht20.read();
+        data.temperature = dht20.getTemperature();
+        data.humidity = dht20.getHumidity();    
+        
+        // Check if any reads failed and exit early
+        if (isnan(data.temperature) || isnan(data.humidity)) {
+            Serial.println("Failed to read from DHT sensor!");
+            data.temperature = data.humidity =  -1;
+            //return;
         }
+
+        // Write into Queue
+        xQueueOverwrite(queue, &data);
+        
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
-    
+
 }

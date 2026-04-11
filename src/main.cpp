@@ -51,7 +51,7 @@ void setup()
   // xTaskCreate(Task_Toogle_BOOT, "Task_Toogle_BOOT", 4096, NULL, 2, NULL);
   xTaskCreate(system_monitor_task, "System Monitor", 4096, NULL, 1, NULL);
 }
-
+/*
 void loop()
 {
   if (check_info_File(1))
@@ -67,4 +67,6 @@ void loop()
   }
   Webserver_reconnect();
 }
+*/
+
 
