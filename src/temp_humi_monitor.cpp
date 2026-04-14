@@ -49,7 +49,7 @@ void temp_humi_monitor(void *pvParameters){
     while(1) {
         dht20.read();
         data.temperature = dht20.getTemperature();
-        data.humidity = dht20.getHumidity();    
+        data.humidity    = dht20.getHumidity();    
         
         // Check if any reads failed and exit early
         if (isnan(data.temperature) || isnan(data.humidity)) {
@@ -57,11 +57,16 @@ void temp_humi_monitor(void *pvParameters){
             data.temperature = data.humidity =  -1;
             //return;
         }
+        
+        // monitor
+        Serial.print("Temp: "); Serial.print(data.temperature); Serial.print(" *C ");
+        Serial.print(" Huminity: "); Serial.print(data.humidity); Serial.print(" % ");
+        Serial.println();
 
         // Write into Queue
         xQueueOverwrite(queue, &data);
         
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        vTaskDelay(pdMS_TO_TICKS(5000));
     }
 
 }

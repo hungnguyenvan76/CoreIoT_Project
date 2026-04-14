@@ -34,20 +34,21 @@ void neo_blinky(void *pvParameters){
         if (xQueuePeek(queue, &receivedData, 0) == pdTRUE) {
 
             current_humidity = receivedData.humidity;
-            if (current_humidity < 40.0) {
+            if (current_humidity < 20.0) {
                 current_color = strip.Color(255, 0, 0); // set pixel 0 to red
-                led_is_on = true;
-                current_delay = pdMS_TO_TICKS(1000);
+                current_delay = pdMS_TO_TICKS(250);
             }
-            else if (current_delay >= 40 && current_delay < 70.0) {
-                current_color = strip.Color(0, 255, 0); // set pixel 0 to green
-                led_is_on = true;
+            else if (current_humidity >= 20.0 && current_humidity < 40.0) {
+                current_color = strip.Color(255, 0, 0); // set pixel 0 to red
                 current_delay = pdMS_TO_TICKS(500);
+            }            
+            else if (current_humidity >= 40.0 && current_humidity < 70.0) {
+                current_color = strip.Color(0, 255, 0); // set pixel 0 to green
+                current_delay = pdMS_TO_TICKS(750);
             }
             else {
                 current_color = strip.Color(0, 0, 255);
-                led_is_on = true;
-                current_delay = pdMS_TO_TICKS(200);
+                current_delay = pdMS_TO_TICKS(1000);
             }
         }
         if (led_is_on) {
