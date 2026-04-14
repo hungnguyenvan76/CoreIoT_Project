@@ -53,6 +53,12 @@ void connnectWSV()
     server.on("/styles.css", HTTP_GET, [](AsyncWebServerRequest *request)
               { request->send(LittleFS, "/styles.css", "text/css"); });
     server.begin();
+
+    // Implement captive portal: redirect all DNS queries to the local web server
+    server.onNotFound([](AsyncWebServerRequest *request) {
+        request->redirect("/");
+    });
+
     ElegantOTA.begin(&server);
     webserver_isrunning = true;
 }

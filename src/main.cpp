@@ -48,8 +48,8 @@ void setup()
   }
 
   // xTaskCreate(main_server_task, "Task Main Server" ,8192  ,NULL  ,2 , NULL);
-  // xTaskCreate(coreiot_task, "CoreIOT Task" ,4096  ,NULL  ,2 , NULL);
-  // xTaskCreate(Task_Toogle_BOOT, "Task_Toogle_BOOT", 4096, NULL, 2, NULL);
+  xTaskCreate(coreiot_task, "CoreIOT Task" ,4096  ,NULL  ,2 , NULL);
+  xTaskCreate(Task_Toogle_BOOT, "Task_Toogle_BOOT", 4096, NULL, 2, NULL);
 }
 
 void loop()
@@ -66,6 +66,10 @@ void loop()
     }
   }
   Webserver_reconnect();
+
+  handleDNS();
+
+  vTaskDelay(pdMS_TO_TICKS(10));
 }
 
 
