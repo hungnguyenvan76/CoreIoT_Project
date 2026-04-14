@@ -42,6 +42,13 @@ void temp_humi_monitor(void *pvParameters){
         vTaskDelay(5000);
         
     }*/
+    
+    lcd.begin();        
+    lcd.backlight();    // Turn on backround 
+    
+    lcd.clear();        // Clear console
+    lcd.setCursor(0, 0); 
+    
     // Read temp & humi 
     QueueHandle_t queue = (QueueHandle_t)pvParameters;
     SensorData_t data; 
@@ -62,6 +69,31 @@ void temp_humi_monitor(void *pvParameters){
         Serial.print("Temp: "); Serial.print(data.temperature); Serial.print(" *C ");
         Serial.print(" Huminity: "); Serial.print(data.humidity); Serial.print(" % ");
         Serial.println();
+
+        // lcd
+        lcd.setCursor(0, 0);
+        if(data.temperature == -1) {
+            lcd.print("Error!"); 
+        } else {
+            lcd.print(data.temperature, 1); // 25.4
+            lcd.print(" *C");              
+        }
+
+        lcd.setCursor(8, 0);
+        if(data.humidity == -1) {
+            lcd.print("Error!");
+        } else {
+            lcd.print(data.humidity, 1);
+            lcd.print(" %  ");
+        }
+
+        lcd.setCursor(0, 1);
+        if (data.temperature > 40.0 || data.temperature < 15.0 || data.humidity > 75.0 || data.humidity < 30.0)
+            lcd.print("CRITICAL!");
+        else if ((data.temperature > 30 || data.temperature < 20) || (data.humidity > 60 || data.humidity < 40))
+            lcd.print("WARNING!");
+        else
+            lcd.print("NORMAL!");
 
         // Write into Queue
         xQueueOverwrite(queue, &data);
