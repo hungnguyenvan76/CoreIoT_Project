@@ -1,11 +1,16 @@
 #include "task_wifi.h"
 
+DNSServer dnsServer;
+
 void startAP()
 {
     WiFi.mode(WIFI_AP);
     WiFi.softAP(String(SSID_AP), String(PASS_AP));
     Serial.print("AP IP: ");
     Serial.println(WiFi.softAPIP());
+
+    dnsServer.start(53, "*", WiFi.softAPIP());
+    Serial.println("Turned on Captive Portal (DNS Server)!");
 }
 
 void startSTA()
@@ -43,4 +48,8 @@ bool Wifi_reconnect()
     }
     startSTA();
     return false;
+}
+
+void handleDNS() {
+    dnsServer.processNextRequest();
 }
