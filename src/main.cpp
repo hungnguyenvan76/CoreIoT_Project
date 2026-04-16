@@ -37,14 +37,12 @@ void setup()
   Serial.begin(115200);
   check_info_File(0);
 
-  //xTaskCreate(led_blinky, "Task LED Blink", 2048, NULL, 2, NULL);
-
   QueueHandle_t sensorQueue = xQueueCreate(1, sizeof(SensorData_t));
   if (sensorQueue) {
       xTaskCreate(temp_humi_monitor, "Task Sensor", 2048, (void *)sensorQueue, 2, NULL);
       xTaskCreate(neo_blinky, "Task NEO", 2048, (void *)sensorQueue, 2, NULL);
       xTaskCreate(led_blinky, "Task LED", 2048, (void *)sensorQueue, 2, NULL);
-      xTaskCreate(tiny_ml_task, "Tiny ML Task" ,2048  ,NULL  ,2 , NULL);
+      xTaskCreate(tiny_ml_task, "Tiny ML Task", 8192, (void *)sensorQueue, 2, NULL);
   }
 
   // xTaskCreate(main_server_task, "Task Main Server" ,8192  ,NULL  ,2 , NULL);
