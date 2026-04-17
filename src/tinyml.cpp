@@ -8,7 +8,7 @@ namespace
     tflite::MicroInterpreter *interpreter = nullptr;
     TfLiteTensor *input = nullptr;
     TfLiteTensor *output = nullptr;
-    constexpr int kTensorArenaSize = 32 * 1024; // Adjust size based on your model
+    constexpr int kTensorArenaSize = 8 * 1024; // Adjust size based on your model
     uint8_t tensor_arena[kTensorArenaSize];
 } // namespace
 
@@ -64,14 +64,8 @@ void tiny_ml_task(void *pvParameters)
                 float h_scaled = receivedData.humidity / 100.0;
 
                 // Copy sensor data to input tensor
-                if (input->type == kTfLiteFloat32) {
-                    input->data.f[0] = t_scaled;
-                    input->data.f[1] = h_scaled;
-                } else if (input->type == kTfLiteInt8) {
-                    // Quantize Float32 to Int8
-                    input->data.int8[0] = (int8_t)(t_scaled / input->params.scale + input->params.zero_point);
-                    input->data.int8[1] = (int8_t)(h_scaled / input->params.scale + input->params.zero_point);
-                }
+                input->data.f[0] = t_scaled;
+                input->data.f[1] = h_scaled;
 
                 // Run inference
                 TfLiteStatus invoke_status = interpreter->Invoke();
@@ -79,42 +73,41 @@ void tiny_ml_task(void *pvParameters)
                 {
                     error_reporter->Report("Invoke failed");
                 } else{
-                    Serial.printf("\n[DEBUG] Kieu Input: %d | Kieu Output: %d | So Node Output: %d\n", input->type, output->type, output->dims->data[1]);
                     float max_confidence = -100.0;
                     int predicted_class = 0;
                     
                     for(int i = 0; i < 4; i++) {
                         float confidence = 0.0;
-                        if (output->type == kTfLiteFloat32) {
-                            confidence = output->data.f[i];
-                        } else if (output->type == kTfLiteInt8) {
-                            // Dequantize Int8 to ratio % Float32
-                            confidence = (output->data.int8[i] - output->params.zero_point) * output->params.scale;
-                        }
+                        confidence = output->data.f[i];
+
                         if(confidence > max_confidence) {
                             max_confidence = confidence;
                             predicted_class = i;
                         }
+
+                        //Serial.printf("Class %d: %f\n", i, confidence);
                     }
                     
+                    Serial.print("AI     -> Dự đoán: ");
                     switch (predicted_class) {
                         case 0:
-                            Serial.printf("NORMAL (Tự tin: %.0f%%)\n", max_confidence * 100);
+                            Serial.printf("NORMAL (Confidence: %.0f%%)\n", max_confidence * 100);
                             break;
                         case 1:
-                            Serial.printf("SENSOR ERROR (Tự tin: %.0f%%)\n", max_confidence * 100);
+                            Serial.printf("SENSOR ERROR (Confidence: %.0f%%)\n", max_confidence * 100);
                             break;
                         case 2:
-                            Serial.printf("FIRE RISK/HOT (Tự tin: %.0f%%)\n", max_confidence * 100);
+                            Serial.printf("MOLD/WET (Confidence: %.0f%%)\n", max_confidence * 100);
                             break;
                         case 3:
-                            Serial.printf("MOLD/WET (Tự tin: %.0f%%)\n", max_confidence * 100);
+                            Serial.printf("FIRE RISK/HOT (Confidence: %.0f%%)\n", max_confidence * 100);
                             break;
                     }
+                    Serial.println("--------------------------------------------------");
                 }
             }
         }
-
+    
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
 }

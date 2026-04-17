@@ -66,8 +66,8 @@ void temp_humi_monitor(void *pvParameters){
         }
         
         // monitor
-        Serial.print("Temp: "); Serial.print(data.temperature); Serial.print(" *C ");
-        Serial.print(" Huminity: "); Serial.print(data.humidity); Serial.print(" % ");
+        //Serial.print("Temp: "); Serial.print(data.temperature); Serial.print(" *C ");
+        //Serial.print(" Huminity: "); Serial.print(data.humidity); Serial.print(" % ");
         Serial.println();
 
         // lcd
