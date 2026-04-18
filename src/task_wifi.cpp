@@ -37,13 +37,14 @@ void startSTA()
     }
     //Give a semaphore here
     xSemaphoreGive(xBinarySemaphoreInternet);
+    Serial.println(WiFi.localIP());
 }
 
 bool Wifi_reconnect()
 {
     const wl_status_t status = WiFi.status();
     if (status == WL_CONNECTED)
-    {
+    {   
         return true;
     }
     startSTA();

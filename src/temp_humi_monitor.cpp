@@ -2,50 +2,14 @@
 DHT20 dht20;
 LiquidCrystal_I2C lcd(33,16,2);
 
-
 void temp_humi_monitor(void *pvParameters){
-
     Wire.begin(11, 12);
     Serial.begin(115200);
     dht20.begin();
-    /*
-    while (1){
-         code 
-        
-        dht20.read();
-        // Reading temperature in Celsius
-        float temperature = dht20.getTemperature();
-        // Reading humidity
-        float humidity = dht20.getHumidity();
-
-        
-
-        // Check if any reads failed and exit early
-        if (isnan(temperature) || isnan(humidity)) {
-            Serial.println("Failed to read from DHT sensor!");
-            temperature = humidity =  -1;
-            //return;
-        }
-
-        //Update global variables for temperature and humidity
-        glob_temperature = temperature;
-        glob_humidity = humidity;
-
-        // Print the results
-        
-        Serial.print("Humidity: ");
-        Serial.print(humidity);
-        Serial.print("%  Temperature: ");
-        Serial.print(temperature);
-        Serial.println("°C");
-        
-        vTaskDelay(5000);
-        
-    }*/
     
     lcd.begin();        
-    lcd.backlight();    // Turn on backround 
-    
+    lcd.backlight();    // Turn on background 
+
     lcd.clear();        // Clear console
     lcd.setCursor(0, 0); 
     
@@ -58,17 +22,15 @@ void temp_humi_monitor(void *pvParameters){
         data.temperature = dht20.getTemperature();
         data.humidity    = dht20.getHumidity();    
         
-        // Check if any reads failed and exit early
+        // Check if any reads failed
         if (isnan(data.temperature) || isnan(data.humidity)) {
             Serial.println("Failed to read from DHT sensor!");
             data.temperature = data.humidity =  -1;
-            //return;
         }
         
-        // monitor
-        //Serial.print("Temp: "); Serial.print(data.temperature); Serial.print(" *C ");
-        //Serial.print(" Huminity: "); Serial.print(data.humidity); Serial.print(" % ");
-        Serial.println();
+        String sensorMsg = "\n==================================================\n";
+        sensorMsg += "[SENSOR] Temp: " + String(data.temperature) + " *C | Humi: " + String(data.humidity) + " %";
+        Serial.println(sensorMsg);
 
         // lcd
         lcd.setCursor(0, 0);
@@ -97,7 +59,11 @@ void temp_humi_monitor(void *pvParameters){
 
         // Write into Queue
         xQueueOverwrite(queue, &data);
-        
+
+        // Send data to Webserver
+        String jsonData = "{\"temperature\": " + String(data.temperature) + ", \"humidity\": " + String(data.humidity) + "}";
+        Webserver_sendata(jsonData);
+
         vTaskDelay(pdMS_TO_TICKS(5000));
     }
 

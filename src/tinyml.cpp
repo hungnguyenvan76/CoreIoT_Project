@@ -46,20 +46,16 @@ void setupTinyML()
 
 void tiny_ml_task(void *pvParameters)
 {
-
     setupTinyML();
     QueueHandle_t sensorQueue = (QueueHandle_t)pvParameters;
     SensorData_t receivedData;
 
-    while (1)
-    {
+    while (1){
         if(sensorQueue && xQueuePeek(sensorQueue, &receivedData, 0) == pdPASS) {
             if(receivedData.temperature == -1 && receivedData.humidity == -1) {
                 Serial.println("[AI] Sensor Error Detected! Skipping inference.");
             } else {
-                Serial.printf("\nSensor -> Temp: %.2f *C | Humidity: %.2f %%\n", receivedData.temperature, receivedData.humidity);
-
-                // CHUẨN HÓA DỮ LIỆU - TRÁNH TRÀN SỐ SOFTMAX
+                // DATA NORMALIZATION - AVOID SOFTMAX OVERFLOW
                 float t_scaled = receivedData.temperature / 100.0;
                 float h_scaled = receivedData.humidity / 100.0;
 
@@ -84,30 +80,26 @@ void tiny_ml_task(void *pvParameters)
                             max_confidence = confidence;
                             predicted_class = i;
                         }
-
-                        //Serial.printf("Class %d: %f\n", i, confidence);
                     }
                     
-                    Serial.print("AI     -> Dự đoán: ");
                     switch (predicted_class) {
                         case 0:
-                            Serial.printf("NORMAL (Confidence: %.0f%%)\n", max_confidence * 100);
+                            Serial.printf("[AI] Predict: NORMAL (Confidence: %.0f%%)\n", max_confidence * 100);
                             break;
                         case 1:
-                            Serial.printf("SENSOR ERROR (Confidence: %.0f%%)\n", max_confidence * 100);
+                            Serial.printf("[AI] Predict: SENSOR ERROR (Confidence: %.0f%%)\n", max_confidence * 100);
                             break;
                         case 2:
-                            Serial.printf("MOLD/WET (Confidence: %.0f%%)\n", max_confidence * 100);
+                            Serial.printf("[AI] Predict: MOLD/WET (Confidence: %.0f%%)\n", max_confidence * 100);
                             break;
                         case 3:
-                            Serial.printf("FIRE RISK/HOT (Confidence: %.0f%%)\n", max_confidence * 100);
+                            Serial.printf("[AI] Predict: FIRE RISK/HOT (Confidence: %.0f%%)\n", max_confidence * 100);
                             break;
                     }
-                    Serial.println("--------------------------------------------------");
                 }
             }
         }
     
-        vTaskDelay(pdMS_TO_TICKS(5000));
+        vTaskDelay(pdMS_TO_TICKS(10000));
     }
 }

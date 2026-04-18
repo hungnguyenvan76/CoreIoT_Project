@@ -70,12 +70,11 @@ void CORE_IOT_sendata(String mode, String feed, String data)
     }
     else if (mode == "telemetry")
     {
-        float value = data.toFloat();
-        tb.sendTelemetryData(feed.c_str(), value);
+       tb.sendTelemetryData(feed.c_str(), data.c_str());
     }
     else
     {
-        // handle unknown mode
+        Serial.println("Unknown mode: " + mode);
     }
 }
 
@@ -85,7 +84,7 @@ void CORE_IOT_reconnect()
     {
         if (!tb.connect(CORE_IOT_SERVER.c_str(), CORE_IOT_TOKEN.c_str(), CORE_IOT_PORT.toInt()))
         {
-            // Serial.println("Failed to connect");
+            Serial.println("Failed to connect");
             return;
         }
 
@@ -94,13 +93,13 @@ void CORE_IOT_reconnect()
         Serial.println("Subscribing for RPC...");
         if (!tb.RPC_Subscribe(callbacks.cbegin(), callbacks.cend()))
         {
-            // Serial.println("Failed to subscribe for RPC");
+            Serial.println("Failed to subscribe for RPC");
             return;
         }
 
         if (!tb.Shared_Attributes_Subscribe(attributes_callback))
         {
-            // Serial.println("Failed to subscribe for shared attribute updates");
+            Serial.println("Failed to subscribe for shared attribute updates");
             return;
         }
 
@@ -108,7 +107,7 @@ void CORE_IOT_reconnect()
 
         if (!tb.Shared_Attributes_Request(attribute_shared_request_callback))
         {
-            // Serial.println("Failed to request for shared attributes");
+            Serial.println("Failed to request for shared attributes");
             return;
         }
         tb.sendAttributeData("localIp", WiFi.localIP().toString().c_str());
@@ -116,5 +115,32 @@ void CORE_IOT_reconnect()
     else if (tb.connected())
     {
         tb.loop();
+    }
+}
+
+void Task_CoreIOT_Publish(void *pvParameters){
+    QueueHandle_t queue = (QueueHandle_t)pvParameters;
+    SensorData_t receivedData;
+    float current_temperature = 0.0;
+    float current_humidity = 0.0;
+
+    while (1){
+        if (xSemaphoreTake(xBinarySemaphoreInternet, portMAX_DELAY) == pdTRUE){
+            xSemaphoreGive(xBinarySemaphoreInternet); 
+            CORE_IOT_sendata("attribute", "macAddress", WiFi.macAddress().c_str());
+            CORE_IOT_sendata("attribute", "localIp", WiFi.localIP().toString().c_str());
+
+            if (tb.connected()){
+                if (xQueuePeek(queue, &receivedData, 0) == pdTRUE){
+                    current_temperature = receivedData.temperature;
+                    current_humidity = receivedData.humidity;
+
+                    CORE_IOT_sendata("telemetry", "temperature", String(current_temperature));
+                    CORE_IOT_sendata("telemetry", "humidity", String(current_humidity));
+                    Serial.println("[CORE_IOT] Sent Temperature: " + String(current_temperature) + ", Humidity: " + String(current_humidity) + " to Cloud");
+                }
+            }
+        }
+        vTaskDelay(pdMS_TO_TICKS(8000)); 
     }
 }
