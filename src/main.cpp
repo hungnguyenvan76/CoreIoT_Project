@@ -37,8 +37,7 @@ void setup()
   Serial.begin(115200);
   check_info_File(0);
 
-  QueueHandle_t sensorQueue = xQueueCreate(1, sizeof(SensorData_t));
-  if (sensorQueue) {
+  if (sensorQueue && aiQueue) {
       xTaskCreate(temp_humi_monitor, "Task Sensor", 2048, (void *)sensorQueue, 2, NULL);
       xTaskCreate(neo_blinky, "Task NEO", 2048, (void *)sensorQueue, 2, NULL);
       xTaskCreate(led_blinky, "Task LED", 2048, (void *)sensorQueue, 2, NULL);

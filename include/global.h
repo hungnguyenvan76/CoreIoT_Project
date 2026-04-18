@@ -19,5 +19,7 @@ extern String CORE_IOT_PORT;
 
 extern boolean isWifiConnected;
 extern SemaphoreHandle_t xBinarySemaphoreInternet;
+extern QueueHandle_t sensorQueue;
+extern QueueHandle_t aiQueue;
 
 #endif

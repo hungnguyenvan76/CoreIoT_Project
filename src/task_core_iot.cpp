@@ -137,7 +137,24 @@ void Task_CoreIOT_Publish(void *pvParameters){
 
                     CORE_IOT_sendata("telemetry", "temperature", String(current_temperature));
                     CORE_IOT_sendata("telemetry", "humidity", String(current_humidity));
-                    Serial.println("[CORE_IOT] Sent Temperature: " + String(current_temperature) + ", Humidity: " + String(current_humidity) + " to Cloud");
+                    String aiMsg = "[CORE_IOT] Sent Temperature: " + String(current_temperature) + ", Humidity: " + String(current_humidity); 
+
+                    String ai_string_result = "NORMAL";
+                    if (aiQueue != NULL) {
+                        int current_ai_class = 0;
+                        if (xQueuePeek(aiQueue, &current_ai_class, 0) == pdPASS) {
+                            switch(current_ai_class) {
+                                case 0: ai_string_result = "NORMAL"; break;
+                                case 1: ai_string_result = "FIRE_RISK"; break;
+                                case 2: ai_string_result = "MOLD_RISK"; break;
+                                case 3: ai_string_result = "SENSOR_ERROR"; break;
+                                case 4: ai_string_result = "HVAC_ON"; break;
+                            }
+                            CORE_IOT_sendata("telemetry", "ai_result", ai_string_result);
+                            aiMsg += ", AI Result: " + ai_string_result;
+                        }
+                    }
+                    Serial.println(aiMsg + " to Cloud");
                 }
             }
         }
