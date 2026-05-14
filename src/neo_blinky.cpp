@@ -38,7 +38,7 @@ void neo_blinky(void *pvParameters){
         else { // NHÁNH MẶC ĐỊNH: Tất cả sẽ nháy Xanh Lá với chu kỳ theo độ ẩm
             if (xQueuePeek(queue, &receivedData, 0) == pdTRUE) {
                 current_humidity = receivedData.humidity;
-                current_color = strip.Color(0, 255, 0);
+                current_color = strip.Color(100, 255, 100);
                 
                 if (current_humidity < 20.0) {
                     current_delay = pdMS_TO_TICKS(250);

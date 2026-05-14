@@ -32,30 +32,32 @@ void temp_humi_monitor(void *pvParameters){
         sensorMsg += "[SENSOR] Temp: " + String(data.temperature) + " *C | Humi: " + String(data.humidity) + " %";
         Serial.println(sensorMsg);
 
-        // lcd
+        int ai_state = -1;
+        if (aiQueue != NULL) {
+            xQueuePeek(aiQueue, &ai_state, 0);
+        }
+
         lcd.setCursor(0, 0);
-        if(data.temperature == -1) {
-            lcd.print("Error!"); 
-        } else {
-            lcd.print(data.temperature, 1); // 25.4
-            lcd.print(" *C");              
-        }
-
+        lcd.print(data.temperature, 1); // 25.4
+        lcd.print(" *C");  
         lcd.setCursor(8, 0);
-        if(data.humidity == -1) {
-            lcd.print("Error!");
-        } else {
-            lcd.print(data.humidity, 1);
-            lcd.print(" %  ");
-        }
-
+        lcd.print(data.humidity, 1);
+        lcd.print(" %  ");
         lcd.setCursor(0, 1);
-        if (data.temperature > 40.0 || data.temperature < 15.0 || data.humidity > 75.0 || data.humidity < 30.0)
-            lcd.print("CRITICAL!");
-        else if ((data.temperature > 30 || data.temperature < 20) || (data.humidity > 60 || data.humidity < 40))
-            lcd.print("WARNING!");
-        else
-            lcd.print("NORMAL!");
+
+        if(ai_state == -1) {
+            lcd.print("COLLECTING DATA!");
+        } else if (ai_state == 0){
+            lcd.print("STATE: NORMAL   ");
+        } else if (ai_state == 1){
+            lcd.print("STATE: FIRE_RISK");
+        } else if (ai_state == 2) {
+            lcd.print("STATE: MOLD RISK");
+        } else if (ai_state == 3) {
+            lcd.print("STATE: ERROR!   ");
+        } else if (ai_state == 4) {
+            lcd.print("STATE: AC ON    ");
+        }
 
         // Write into Queue
         xQueueOverwrite(queue, &data);

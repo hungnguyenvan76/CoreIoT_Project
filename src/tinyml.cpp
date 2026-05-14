@@ -107,7 +107,7 @@ void tiny_ml_task(void *pvParameters)
                         case 1: class_name = "FIRE_RISK"; break;
                         case 2: class_name = "MOLD_RISK"; break;
                         case 3: class_name = "SENSOR_ERROR"; break;
-                        case 4: class_name = "HVAC_ON"; break;
+                        case 4: class_name = "AC_ON"; break;
                     }
 
                     String aiMsg = "[AI] Predict: " + class_name + " (Confidence: " + String(max_confidence * 100, 0) + "%)";
