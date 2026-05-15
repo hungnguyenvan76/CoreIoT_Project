@@ -37,13 +37,20 @@ void setup()
   Serial.begin(115200);
   check_info_File(0);
 
-  if (sensorQueue && aiQueue) {
+  if(is_board_1){
+    if (sensorQueue && aiQueue) {
       xTaskCreate(temp_humi_monitor, "Task Sensor", 2048, (void *)sensorQueue, 2, NULL);
       // xTaskCreate(neo_blinky, "Task NEO", 2048, (void *)sensorQueue, 2, NULL);
       // xTaskCreate(led_blinky, "Task LED", 2048, (void *)sensorQueue, 2, NULL);
       xTaskCreate(tiny_ml_task, "Tiny ML Task", 4096, (void *)sensorQueue, 2, NULL);
       xTaskCreate(Task_CoreIOT_Publish, "CoreIOT_Pub_Task", 4096, (void *)sensorQueue, 2, NULL);
+    }
+  } else{
+    if (sensorQueue && aiQueue) {
+      xTaskCreate(neo_blinky, "Task NEO", 2048, (void *)sensorQueue, 2, NULL);
+    }
   }
+  
   xTaskCreate(Task_Toogle_BOOT, "Task_Toogle_BOOT", 4096, NULL, 2, NULL);
 }
 

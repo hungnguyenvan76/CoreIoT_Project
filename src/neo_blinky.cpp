@@ -1,18 +1,16 @@
 #include "neo_blinky.h"
 
 void neo_blinky(void *pvParameters){
-
     QueueHandle_t queue = (QueueHandle_t)pvParameters;
     SensorData_t receivedData;
     int ai_state = -1;
 
     Adafruit_NeoPixel strip(LED_COUNT, NEO_PIN, NEO_GRB + NEO_KHZ800);
     strip.begin();
-    // Set all pixels to off to start
     strip.clear();
     strip.show();
 
-    uint32_t current_color = strip.Color(0, 255, 0); // Mặc định xanh lá
+    uint32_t current_color = strip.Color(0, 255, 0); // Default is green
     TickType_t current_delay = pdMS_TO_TICKS(1000);
     bool led_is_on = false;
     float current_humidity = 0.0;
@@ -22,6 +20,7 @@ void neo_blinky(void *pvParameters){
             xQueuePeek(aiQueue, &ai_state, 0);
         }
 
+        #if is_board_1 // BOARD 1 RUNS NORMALLY
         // NHÁNH ƯU TIÊN: CẢNH BÁO TỪ AI
         if (ai_state == 2) { // MOLD_RISK
             // Double Blink (Xanh dương)
@@ -63,5 +62,25 @@ void neo_blinky(void *pvParameters){
             led_is_on = !led_is_on;
             vTaskDelay(current_delay);
         }
+
+        #else // BOARD 2 LOGIC
+        if (ai_state == 1) { // FIRE_RISK
+            strip.setPixelColor(0, strip.Color(255, 0, 0)); strip.show(); vTaskDelay(pdMS_TO_TICKS(200));
+            strip.setPixelColor(0, strip.Color(0, 0, 0));   strip.show(); vTaskDelay(pdMS_TO_TICKS(200));
+        } 
+        else if (ai_state == 2) { // MOLD_RISK
+            strip.setPixelColor(0, strip.Color(0, 0, 255)); strip.show(); vTaskDelay(pdMS_TO_TICKS(200));
+            strip.setPixelColor(0, strip.Color(0, 0, 0));   strip.show(); vTaskDelay(pdMS_TO_TICKS(200));
+        }
+        else if (ai_state == 3) { // SENSOR_ERROR
+            strip.setPixelColor(0, strip.Color(255, 255, 0)); strip.show(); vTaskDelay(pdMS_TO_TICKS(200));
+            strip.setPixelColor(0, strip.Color(0, 0, 0));     strip.show(); vTaskDelay(pdMS_TO_TICKS(200));
+        }
+        else {
+            strip.setPixelColor(0, strip.Color(10, 10, 10)); strip.show(); vTaskDelay(pdMS_TO_TICKS(500));
+            strip.setPixelColor(0, strip.Color(0, 0, 0));    strip.show(); vTaskDelay(pdMS_TO_TICKS(500));
+        }
+
+        #endif
     }
 }
