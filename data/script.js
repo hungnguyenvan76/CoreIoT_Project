@@ -6,6 +6,7 @@ window.addEventListener('load', onLoad);
 
 function onLoad(event) {
     initWebSocket();
+    initChart();
 }
 
 function onOpen(event) {
@@ -18,7 +19,6 @@ function onClose(event) {
 }
 
 function initWebSocket() {
-    console.log('Trying to open a WebSocket connection…');
     websocket = new WebSocket(gateway);
     websocket.onopen = onOpen;
     websocket.onclose = onClose;
@@ -30,159 +30,204 @@ function Send_Data(data) {
         websocket.send(data);
         console.log("📤 Gửi:", data);
     } else {
-        console.warn("⚠️ WebSocket chưa sẵn sàng!");
         alert("⚠️ WebSocket chưa kết nối!");
     }
 }
 
+// Xử lý dữ liệu nhận về từ vi điều khiển
 function onMessage(event) {
-    console.log("📩 Nhận:", event.data);
     try {
         var data = JSON.parse(event.data);
-        // Có thể thêm xử lý riêng nếu cần (ví dụ cập nhật trạng thái)
+        
+        // 1. Cập nhật Đồng hồ & Biểu đồ (Nhiệt độ, Độ ẩm)
         if(data.temperature !== undefined && data.humidity !== undefined) {
             gaugeTemp.refresh(data.temperature);
             gaugeHumi.refresh(data.humidity);
+            updateChartData(data.temperature, data.humidity);
         }
+
+        // 2. Cập nhật Khung trạng thái AI
+        if(data.ai_state !== undefined) {
+            updateAIStatus(data.ai_state);
+        }
+
     } catch (e) {
-        console.warn("Không phải JSON hợp lệ:", event.data);
+        console.warn("Lỗi Parse JSON:", event.data);
     }
 }
 
-
 // ==================== UI NAVIGATION ====================
-let relayList = [];
-let deleteTarget = null;
-
 function showSection(id, event) {
     document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
-    document.getElementById(id).style.display = id === 'settings' ? 'flex' : 'block';
+    document.getElementById(id).style.display = 'block';
+    if(id === 'settings') document.getElementById(id).style.display = 'flex';
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     event.currentTarget.classList.add('active');
 }
 
+// ==================== AI STATUS LOGIC ====================
+function updateAIStatus(stateCode) {
+    const card = document.getElementById('aiStatusCard');
+    const text = document.getElementById('aiStateText');
 
-// ==================== HOME GAUGES ====================
-var gaugeTemp;
-var gaugeHumi;
+    // Reset styles
+    card.style.borderColor = "#444";
+    text.style.color = "#ffffff";
+
+    switch(stateCode) {
+        case -1:
+            text.innerText = "COLLECTING DATA!";
+            card.style.borderColor = "var(--ai-warning)";
+            text.style.color = "var(--ai-warning)";
+            break;
+        case 0:
+            text.innerText = "STATE: NORMAL";
+            card.style.borderColor = "var(--ai-normal)";
+            text.style.color = "var(--ai-normal)";
+            break;
+        case 1:
+            text.innerText = "STATE: FIRE RISK";
+            card.style.borderColor = "var(--ai-danger)";
+            text.style.color = "var(--ai-danger)";
+            break;
+        case 2:
+            text.innerText = "STATE: MOLD RISK";
+            card.style.borderColor = "var(--ai-info)";
+            text.style.color = "var(--ai-info)";
+            break;
+        case 3:
+            text.innerText = "STATE: ERROR!";
+            card.style.borderColor = "var(--ai-danger)";
+            text.style.color = "var(--ai-danger)";
+            break;
+        case 4:
+            text.innerText = "STATE: AC ON";
+            card.style.borderColor = "var(--accent-blue)";
+            text.style.color = "var(--accent-blue)";
+            break;
+    }
+}
+
+// ==================== GAUGES & CHART ====================
+var gaugeTemp, gaugeHumi;
+var timeChart;
+
 window.onload = function () {
+    // Khởi tạo JustGage với tông màu sáng cho text
     gaugeTemp = new JustGage({
-        id: "gauge_temp",
-        value: 0,
-        min: -10,
-        max: 50,
-        donut: true,
-        pointer: false,
-        gaugeWidthScale: 0.25,
-        gaugeColor: "transparent",
-        levelColorsGradient: true,
-        levelColors: ["#00BCD4", "#4CAF50", "#FFC107", "#F44336"]
+        id: "gauge_temp", value: 0, min: -10, max: 80, donut: true, pointer: true,
+        gaugeColor: "#e2e5eb", valueFontColor: "#1a1d23",
+        levelColors: ["#00d2ff", "#2ed573", "#ffa502", "#ff4757"]
     });
 
     gaugeHumi = new JustGage({
-        id: "gauge_humi",
-        value: 0,
-        min: 0,
-        max: 100,
-        donut: true,
-        pointer: false,
-        gaugeWidthScale: 0.25,
-        gaugeColor: "transparent",
-        levelColorsGradient: true,
-        levelColors: ["#42A5F5", "#00BCD4", "#0288D1"]
+        id: "gauge_humi", value: 0, min: 0, max: 100, donut: true, pointer: true,
+        gaugeColor: "#e2e5eb", valueFontColor: "#1a1d23",
+        levelColors: ["#ffa502", "#2ed573", "#00d2ff"]
     });
 
-    // setInterval(() => {
-    //     gaugeTemp.refresh(Math.floor(Math.random() * 15) + 20);
-    //     gaugeHumi.refresh(Math.floor(Math.random() * 40) + 40);
-    // }, 3000);
+    initChart();
 };
 
+function initChart() {
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    Chart.defaults.color = '#6b7280'; 
 
-// ==================== DEVICE FUNCTIONS ====================
-function openAddRelayDialog() {
-    document.getElementById('addRelayDialog').style.display = 'flex';
-}
-function closeAddRelayDialog() {
-    document.getElementById('addRelayDialog').style.display = 'none';
-}
-function saveRelay() {
-    const name = document.getElementById('relayName').value.trim();
-    const gpio = document.getElementById('relayGPIO').value.trim();
-    if (!name || !gpio) return alert("⚠️ Please fill all fields!");
-    relayList.push({ id: Date.now(), name, gpio, state: false });
-    renderRelays();
-    closeAddRelayDialog();
-}
-function renderRelays() {
-    const container = document.getElementById('relayContainer');
-    container.innerHTML = "";
-    relayList.forEach(r => {
-        const card = document.createElement('div');
-        card.className = 'device-card';
-        card.innerHTML = `
-      <i class="fa-solid fa-bolt device-icon"></i>
-      <h3>${r.name}</h3>
-      <p>GPIO: ${r.gpio}</p>
-      <button class="toggle-btn ${r.state ? 'on' : ''}" onclick="toggleRelay(${r.id})">
-        ${r.state ? 'ON' : 'OFF'}
-      </button>
-      <i class="fa-solid fa-trash delete-icon" onclick="showDeleteDialog(${r.id})"></i>
-    `;
-        container.appendChild(card);
+    timeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [], 
+            datasets: [
+                { label: 'Nhiệt độ (°C)', borderColor: '#ff4757', backgroundColor: 'rgba(255, 71, 87, 0.2)', data: [], tension: 0.4, fill: true },
+                { label: 'Độ ẩm (%)', borderColor: '#00d2ff', backgroundColor: 'rgba(0, 210, 255, 0.2)', data: [], tension: 0.4, fill: true }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false, /* THÊM DÒNG NÀY ĐỂ ÉP BIỂU ĐỒ VỪA KHUNG */
+            scales: {
+                x: { grid: { color: '#e2e5eb' } },
+                y: { grid: { color: '#e2e5eb' } }
+            }
+        }
     });
 }
-function toggleRelay(id) {
-    const relay = relayList.find(r => r.id === id);
-    if (relay) {
-        relay.state = !relay.state;
-        const relayJSON = JSON.stringify({
-            page: "device",
-            value: {
-                name: relay.name,
-                status: relay.state ? "ON" : "OFF",
-                gpio: relay.gpio
-            }
-        });
-        Send_Data(relayJSON);
-        renderRelays();
+
+function updateChartData(temp, hum) {
+    const now = new Date();
+    const timeString = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
+
+    if(timeChart.data.labels.length > 15) {
+        timeChart.data.labels.shift();
+        timeChart.data.datasets[0].data.shift();
+        timeChart.data.datasets[1].data.shift();
     }
-}
-function showDeleteDialog(id) {
-    deleteTarget = id;
-    document.getElementById('confirmDeleteDialog').style.display = 'flex';
-}
-function closeConfirmDelete() {
-    document.getElementById('confirmDeleteDialog').style.display = 'none';
-}
-function confirmDelete() {
-    relayList = relayList.filter(r => r.id !== deleteTarget);
-    renderRelays();
-    closeConfirmDelete();
+
+    timeChart.data.labels.push(timeString);
+    timeChart.data.datasets[0].data.push(temp);
+    timeChart.data.datasets[1].data.push(hum);
+    timeChart.update();
 }
 
+// ==================== DEVICE CONTROLS ====================
+let ledState = false;
+let neoState = false;
 
-// ==================== SETTINGS FORM (BỔ SUNG) ====================
+function toggleLed() {
+    ledState = !ledState;
+    const btn = document.getElementById('btnLed');
+    btn.innerText = ledState ? "TRẠNG THÁI: BẬT" : "TRẠNG THÁI: TẮT";
+    btn.className = ledState ? "toggle-btn on" : "toggle-btn";
+    updateLed();
+}
+
+function updateLed() {
+    const freq = document.getElementById('sliderLedFreq').value;
+    document.getElementById('valLedFreq').innerText = freq;
+    
+    const payload = JSON.stringify({
+        device: "single_led",
+        state: ledState ? "ON" : "OFF",
+        delay: parseInt(freq)
+    });
+    Send_Data(payload);
+}
+
+function toggleNeo() {
+    neoState = !neoState;
+    const btn = document.getElementById('btnNeo');
+    btn.innerText = neoState ? "TRẠNG THÁI: BẬT" : "TRẠNG THÁI: TẮT";
+    btn.className = neoState ? "toggle-btn on" : "toggle-btn";
+    updateNeo();
+}
+
+function updateNeo() {
+    const freq = document.getElementById('sliderNeoFreq').value;
+    const hexColor = document.getElementById('pickerNeoColor').value;
+    document.getElementById('valNeoFreq').innerText = freq;
+    
+    const payload = JSON.stringify({
+        device: "neopixel",
+        state: neoState ? "ON" : "OFF",
+        color: hexColor, // Dạng #RRGGBB
+        delay: parseInt(freq)
+    });
+    Send_Data(payload);
+}
+
+// ==================== SETTINGS FORM ====================
 document.getElementById("settingsForm").addEventListener("submit", function (e) {
     e.preventDefault();
-
-    const ssid = document.getElementById("ssid").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const token = document.getElementById("token").value.trim();
-    const server = document.getElementById("server").value.trim();
-    const port = document.getElementById("port").value.trim();
-
     const settingsJSON = JSON.stringify({
         page: "setting",
         value: {
-            ssid: ssid,
-            password: password,
-            token: token,
-            server: server,
-            port: port
+            ssid: document.getElementById("ssid").value.trim(),
+            password: document.getElementById("password").value.trim(),
+            token: document.getElementById("token").value.trim(),
+            server: document.getElementById("server").value.trim(),
+            port: document.getElementById("port").value.trim()
         }
     });
-
     Send_Data(settingsJSON);
-    alert("✅ Cấu hình đã được gửi đến thiết bị!");
+    alert("✅ Đã gửi lệnh khởi động cấu hình hệ thống!");
 });

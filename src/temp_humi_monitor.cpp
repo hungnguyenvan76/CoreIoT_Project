@@ -63,7 +63,9 @@ void temp_humi_monitor(void *pvParameters){
         xQueueOverwrite(queue, &data);
 
         // Send data to Webserver
-        String jsonData = "{\"temperature\": " + String(data.temperature) + ", \"humidity\": " + String(data.humidity) + "}";
+        String jsonData = "{\"temperature\": " + String(data.temperature) + 
+                        ", \"humidity\": "   + String(data.humidity)    + 
+                        ", \"ai_state\": "   + String(ai_state)         + "}";
         Webserver_sendata(jsonData);
 
         vTaskDelay(pdMS_TO_TICKS(5000));

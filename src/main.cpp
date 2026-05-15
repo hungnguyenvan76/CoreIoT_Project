@@ -39,8 +39,8 @@ void setup()
 
   if (sensorQueue && aiQueue) {
       xTaskCreate(temp_humi_monitor, "Task Sensor", 2048, (void *)sensorQueue, 2, NULL);
-      //xTaskCreate(neo_blinky, "Task NEO", 2048, (void *)sensorQueue, 2, NULL);
-      //xTaskCreate(led_blinky, "Task LED", 2048, (void *)sensorQueue, 2, NULL);
+      // xTaskCreate(neo_blinky, "Task NEO", 2048, (void *)sensorQueue, 2, NULL);
+      // xTaskCreate(led_blinky, "Task LED", 2048, (void *)sensorQueue, 2, NULL);
       xTaskCreate(tiny_ml_task, "Tiny ML Task", 4096, (void *)sensorQueue, 2, NULL);
       xTaskCreate(Task_CoreIOT_Publish, "CoreIOT_Pub_Task", 4096, (void *)sensorQueue, 2, NULL);
   }
