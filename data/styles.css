@@ -1,18 +1,17 @@
 :root {
-  /* === PALETTE MỚI: TRUNG TÍNH & HIỆN ĐẠI === */
-  --bg-dark: #f0f2f5;           /* Nền tổng thể: xám nhạt ấm */
-  --card-dark: #ffffff;          /* Card: trắng tinh */
-  --sidebar-bg: #1c2230;         /* Sidebar: xanh đen đậm */
-  --text-main: #1a1d23;          /* Chữ chính: gần đen */
-  --text-muted: #6b7280;         /* Chữ phụ: xám trung tính */
-  --accent-blue: #4f6ef7;        /* Accent: xanh slate-blue */
-  --accent-hover: #3b56e0;       /* Hover accent */
-  --bg-input: #f7f8fa;           /* Input nền: xám siêu nhạt */
-  --border-color: #e2e5eb;       /* Viền: xám nhạt */
-  --ai-normal: #16a34a;          /* AI normal: xanh lá trầm */
-  --ai-warning: #d97706;         /* Warning: cam hổ phách */
-  --ai-danger: #dc2626;          /* Danger: đỏ */
-  --ai-info: #2563eb;            /* Info: xanh dương */
+  --bg-dark: #f0f2f5;            /* Overall background: warm light gray */
+  --card-dark: #ffffff;          /* Card background: pure white */
+  --sidebar-bg: #1c2230;         /* Sidebar background: dark navy */
+  --text-main: #1a1d23;          /* Primary text color: near black */
+  --text-muted: #6b7280;         /* Secondary text color: neutral gray */
+  --accent-blue: #4f6ef7;        /* Primary accent color: slate blue */
+  --accent-hover: #3b56e0;       /* Accent hover color */
+  --bg-input: #f7f8fa;           /* Input background: very light gray */
+  --border-color: #e2e5eb;       /* Border color: light gray */
+  --ai-normal: #16a34a;          /* Normal status: muted green */
+  --ai-warning: #d97706;         /* Warning status: amber orange */
+  --ai-danger: #dc2626;          /* Danger/error status: red */
+  --ai-info: #2563eb;            /* Information status: blue */
 }
 
 body {
@@ -127,7 +126,7 @@ header p {
   align-items: stretch;
 }
 
-/* Cột Trái: Đồng hồ */
+/* Left column: Clock */
 .gauges-column {
   flex: 0 0 32%;
   display: flex;
@@ -158,7 +157,7 @@ header p {
   height: 160px;
 }
 
-/* Cột Phải: Biểu đồ */
+/* Right column: Charts */
 .chart-column {
   flex: 1;
   background: var(--card-dark);
@@ -215,6 +214,7 @@ header p {
   color: var(--text-main);
 }
 
+/* ===== TOGGLE BUTTON STATES ===== */
 .toggle-btn {
   width: 100%;
   border: 1.5px solid var(--border-color);
@@ -234,12 +234,27 @@ header p {
   color: var(--accent-blue);
 }
 
+/* (ON) - Green */
 .toggle-btn.on {
   background: #dcfce7;
   color: #16a34a;
   border-color: #86efac;
-  box-shadow: none;
 }
+
+/* (OFF) - Light Red */
+.toggle-btn.off {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+/* (AUTO) - Light Blue */
+.toggle-btn.auto {
+  background: #e0e7ff;
+  color: var(--accent-blue);
+  border-color: #a5b4fc;
+}
+/* ================================= */
 
 .slider-group {
   text-align: left;
@@ -358,4 +373,42 @@ header p {
   background: var(--accent-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(79, 110, 247, 0.3);
+}
+
+/* ===== RESPONSIVE TWEAKS (Display on Mobile) ===== */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 10px 0;
+  }
+  
+  .logo-container {
+    display: none; /* Ẩn logo trên mobile để tiết kiệm diện tích */
+  }
+  
+  .nav-item {
+    width: auto;
+    padding: 10px 15px;
+    margin: 0;
+  }
+
+  .home-dashboard, .device-list {
+    flex-direction: column;
+  }
+  
+  .gauges-column {
+    flex: 1;
+    flex-direction: row; 
+  }
+
+  .main-content {
+    padding: 15px;
+  }
 }

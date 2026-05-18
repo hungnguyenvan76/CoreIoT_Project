@@ -11,13 +11,32 @@ void led_blinky(void *pvParameters){
   bool led_is_on = false;
   float current_temperature = 0.0;
 
+  WsLedConfig_t wsState = {false, false, 1000};
+
   while(1) {                        
     if (aiQueue != NULL) {
         xQueuePeek(aiQueue, &ai_state, 0);
     }
     
+    if (wsLedQueue != NULL) {
+            xQueuePeek(wsLedQueue, &wsState, 0);
+    }
+        
+    // PRIORITY 1: WEBSOCKET OVERRIDE
+    if (wsState.isManual) {
+        if (wsState.isOn) {
+            if (led_is_on) digitalWrite(LED_GPIO, HIGH);
+            else digitalWrite(LED_GPIO, LOW);
+            led_is_on = !led_is_on;
+            vTaskDelay(pdMS_TO_TICKS(wsState.delayMs));
+        } else {
+            digitalWrite(LED_GPIO, LOW);
+            vTaskDelay(pdMS_TO_TICKS(100)); 
+        }
+
+    }
     // NHÁNH ƯU TIÊN: CẢNH BÁO TỪ AI
-    if (ai_state == 1) { // FIRE_RISK
+    else if (ai_state == 1) { // FIRE_RISK
         // Chớp nháy liên tục
         digitalWrite(LED_GPIO, HIGH); vTaskDelay(pdMS_TO_TICKS(50));
         digitalWrite(LED_GPIO, LOW);  vTaskDelay(pdMS_TO_TICKS(50));

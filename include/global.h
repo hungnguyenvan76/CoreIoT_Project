@@ -11,6 +11,23 @@ typedef struct {
     float humidity;
 } SensorData_t;
 
+typedef struct {
+    bool isManual; //false = follow AI/Sensor, true = Web control
+    bool isOn;
+    int delayMs;
+} WsLedConfig_t;
+
+typedef struct {
+    bool isManual;
+    bool isOn;
+    int delayMs;
+    uint8_t r, g, b;
+} WsNeoConfig_t;
+
+extern QueueHandle_t wsLedQueue;
+extern QueueHandle_t wsNeoQueue;
+
+
 extern String WIFI_SSID;
 extern String WIFI_PASS;
 extern String CORE_IOT_TOKEN;

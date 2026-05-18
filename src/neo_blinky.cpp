@@ -15,14 +15,33 @@ void neo_blinky(void *pvParameters){
     bool led_is_on = false;
     float current_humidity = 0.0;
 
+    WsNeoConfig_t wsState = {false, false, 1000, 0, 0, 0};
+
     while(1) {                      
         if (aiQueue != NULL) {
             xQueuePeek(aiQueue, &ai_state, 0);
         }
 
+        if (wsNeoQueue != NULL) {
+            xQueuePeek(wsNeoQueue, &wsState, 0);
+        }
+
         #if is_board_1 // BOARD 1 RUNS NORMALLY
+        if (wsState.isManual) {
+            if (wsState.isOn) {
+                if (led_is_on) strip.setPixelColor(0, strip.Color(wsState.r, wsState.g, wsState.b));
+                else strip.clear();
+                strip.show();
+                led_is_on = !led_is_on;
+                vTaskDelay(pdMS_TO_TICKS(wsState.delayMs));
+            } else {
+                strip.clear();
+                strip.show();
+                vTaskDelay(pdMS_TO_TICKS(100)); // AI
+            }
+        }
         // NHÁNH ƯU TIÊN: CẢNH BÁO TỪ AI
-        if (ai_state == 2) { // MOLD_RISK
+        else if (ai_state == 2) { // MOLD_RISK
             // Double Blink (Xanh dương)
             strip.setPixelColor(0, strip.Color(0, 0, 255)); strip.show(); vTaskDelay(pdMS_TO_TICKS(150));
             strip.setPixelColor(0, strip.Color(0, 0, 0));   strip.show(); vTaskDelay(pdMS_TO_TICKS(150));

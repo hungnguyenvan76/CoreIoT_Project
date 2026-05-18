@@ -11,6 +11,10 @@ String password = "12345678";
 String wifi_ssid = "abcde";
 String wifi_password = "123456789";
 boolean isWifiConnected = false;
+
+QueueHandle_t wsLedQueue;
+QueueHandle_t wsNeoQueue;
+
 SemaphoreHandle_t xBinarySemaphoreInternet = xSemaphoreCreateBinary();
 QueueHandle_t sensorQueue = xQueueCreate(1, sizeof(SensorData_t));
 QueueHandle_t aiQueue = xQueueCreate(1, sizeof(int));

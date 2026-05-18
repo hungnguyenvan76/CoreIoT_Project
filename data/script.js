@@ -34,19 +34,19 @@ function Send_Data(data) {
     }
 }
 
-// Xử lý dữ liệu nhận về từ vi điều khiển
+// Process data received from the microcontroller
 function onMessage(event) {
     try {
         var data = JSON.parse(event.data);
         
-        // 1. Cập nhật Đồng hồ & Biểu đồ (Nhiệt độ, Độ ẩm)
+        // Update Clock & Chart (Temperature, Humidity)
         if(data.temperature !== undefined && data.humidity !== undefined) {
             gaugeTemp.refresh(data.temperature);
             gaugeHumi.refresh(data.humidity);
             updateChartData(data.temperature, data.humidity);
         }
 
-        // 2. Cập nhật Khung trạng thái AI
+        // 2. Update AI Status Card
         if(data.ai_state !== undefined) {
             updateAIStatus(data.ai_state);
         }
@@ -113,7 +113,6 @@ var gaugeTemp, gaugeHumi;
 var timeChart;
 
 window.onload = function () {
-    // Khởi tạo JustGage với tông màu sáng cho text
     gaugeTemp = new JustGage({
         id: "gauge_temp", value: 0, min: -10, max: 80, donut: true, pointer: true,
         gaugeColor: "#e2e5eb", valueFontColor: "#1a1d23",
@@ -144,7 +143,7 @@ function initChart() {
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false, /* THÊM DÒNG NÀY ĐỂ ÉP BIỂU ĐỒ VỪA KHUNG */
+            maintainAspectRatio: false, 
             scales: {
                 x: { grid: { color: '#e2e5eb' } },
                 y: { grid: { color: '#e2e5eb' } }
@@ -170,14 +169,26 @@ function updateChartData(temp, hum) {
 }
 
 // ==================== DEVICE CONTROLS ====================
-let ledState = false;
-let neoState = false;
+let ledState = "AUTO"; 
+let neoState = "AUTO";
 
 function toggleLed() {
-    ledState = !ledState;
+    // Loop state: AUTO -> ON -> OFF -> AUTO...
+    if (ledState === "AUTO") {
+        ledState = "ON";
+    } else if (ledState === "ON") {
+        ledState = "OFF";
+    } else {
+        ledState = "AUTO";
+    }
+
     const btn = document.getElementById('btnLed');
-    btn.innerText = ledState ? "TRẠNG THÁI: BẬT" : "TRẠNG THÁI: TẮT";
-    btn.className = ledState ? "toggle-btn on" : "toggle-btn";
+    btn.innerText = "TRẠNG THÁI: " + ledState;
+    
+    if (ledState === "ON") btn.className = "toggle-btn on";
+    else if (ledState === "OFF") btn.className = "toggle-btn off";
+    else btn.className = "toggle-btn auto"; 
+    
     updateLed();
 }
 
@@ -187,17 +198,29 @@ function updateLed() {
     
     const payload = JSON.stringify({
         device: "single_led",
-        state: ledState ? "ON" : "OFF",
+        state: ledState, // Send "AUTO", "ON" or "OFF"
         delay: parseInt(freq)
     });
     Send_Data(payload);
 }
 
 function toggleNeo() {
-    neoState = !neoState;
+    // Loop state: AUTO -> ON -> OFF -> AUTO...
+    if (neoState === "AUTO") {
+        neoState = "ON";
+    } else if (neoState === "ON") {
+        neoState = "OFF";
+    } else {
+        neoState = "AUTO";
+    }
+
     const btn = document.getElementById('btnNeo');
-    btn.innerText = neoState ? "TRẠNG THÁI: BẬT" : "TRẠNG THÁI: TẮT";
-    btn.className = neoState ? "toggle-btn on" : "toggle-btn";
+    btn.innerText = "TRẠNG THÁI: " + neoState;
+    
+    if (neoState === "ON") btn.className = "toggle-btn on";
+    else if (neoState === "OFF") btn.className = "toggle-btn off";
+    else btn.className = "toggle-btn auto"; 
+
     updateNeo();
 }
 
@@ -208,8 +231,8 @@ function updateNeo() {
     
     const payload = JSON.stringify({
         device: "neopixel",
-        state: neoState ? "ON" : "OFF",
-        color: hexColor, // Dạng #RRGGBB
+        state: neoState, // Send "AUTO", "ON" or "OFF"
+        color: hexColor, 
         delay: parseInt(freq)
     });
     Send_Data(payload);
