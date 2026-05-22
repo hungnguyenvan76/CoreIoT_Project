@@ -214,7 +214,7 @@ header p {
   color: var(--text-main);
 }
 
-/* ===== TOGGLE BUTTON STATES ===== */
+/* TOGGLE BUTTON STATES */
 .toggle-btn {
   width: 100%;
   border: 1.5px solid var(--border-color);
@@ -254,7 +254,6 @@ header p {
   color: var(--accent-blue);
   border-color: #a5b4fc;
 }
-/* ================================= */
 
 .slider-group {
   text-align: left;
@@ -375,7 +374,7 @@ header p {
   box-shadow: 0 4px 12px rgba(79, 110, 247, 0.3);
 }
 
-/* ===== RESPONSIVE TWEAKS (Display on Mobile) ===== */
+/* RESPONSIVE TWEAKS (Display on Mobile) */
 @media (max-width: 768px) {
   body {
     flex-direction: column;
@@ -390,7 +389,7 @@ header p {
   }
   
   .logo-container {
-    display: none; /* Ẩn logo trên mobile để tiết kiệm diện tích */
+    display: none; 
   }
   
   .nav-item {

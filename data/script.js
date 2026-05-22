@@ -1,4 +1,4 @@
-// ==================== WEBSOCKET ====================
+// WEBSOCKET 
 var gateway = `ws://${window.location.hostname}/ws`;
 var websocket;
 
@@ -56,7 +56,7 @@ function onMessage(event) {
     }
 }
 
-// ==================== UI NAVIGATION ====================
+// UI NAVIGATION 
 function showSection(id, event) {
     document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
     document.getElementById(id).style.display = 'block';
@@ -65,7 +65,7 @@ function showSection(id, event) {
     event.currentTarget.classList.add('active');
 }
 
-// ==================== AI STATUS LOGIC ====================
+// AI STATUS LOGIC 
 function updateAIStatus(stateCode) {
     const card = document.getElementById('aiStatusCard');
     const text = document.getElementById('aiStateText');
@@ -108,7 +108,7 @@ function updateAIStatus(stateCode) {
     }
 }
 
-// ==================== GAUGES & CHART ====================
+// GAUGES & CHART 
 var gaugeTemp, gaugeHumi;
 var timeChart;
 
@@ -168,7 +168,7 @@ function updateChartData(temp, hum) {
     timeChart.update();
 }
 
-// ==================== DEVICE CONTROLS ====================
+// DEVICE CONTROLS 
 let ledState = "AUTO"; 
 let neoState = "AUTO";
 
@@ -238,7 +238,7 @@ function updateNeo() {
     Send_Data(payload);
 }
 
-// ==================== SETTINGS FORM ====================
+// SETTINGS FORM 
 document.getElementById("settingsForm").addEventListener("submit", function (e) {
     e.preventDefault();
     const settingsJSON = JSON.stringify({

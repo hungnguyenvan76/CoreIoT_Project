@@ -1,6 +1,6 @@
 #include <task_handler.h>
 
-// ---- Process WebSocket ----
+// Process WebSocket 
 void handleWebSocketMessage(String message)
 {
     wsLedQueue = xQueueCreate(1, sizeof(WsLedConfig_t));
