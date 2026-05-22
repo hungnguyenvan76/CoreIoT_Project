@@ -15,5 +15,6 @@
 
 void setupTinyML();
 void tiny_ml_task(void *pvParameters);
+void evaluate_tinyml_task(void *pvParameters);
 
 #endif

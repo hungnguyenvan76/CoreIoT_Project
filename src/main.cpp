@@ -35,8 +35,13 @@ void system_monitor_task(void *pvParameters) {
 void setup()
 {
   Serial.begin(115200);
-  check_info_File(0);
+  // check_info_File(0);
 
+  // --- REPORT EVALUATION TASK ONLY ---
+  // To restore normal operations, revert this block.
+  xTaskCreate(evaluate_tinyml_task, "Eval TinyML", 8192, NULL, 2, NULL);
+
+  /*
   if(is_board_1){
     if (sensorQueue && aiQueue) {
       xTaskCreate(temp_humi_monitor, "Task Sensor", 2048, (void *)sensorQueue, 2, NULL);
@@ -52,10 +57,12 @@ void setup()
   }
   
   xTaskCreate(Task_Toogle_BOOT, "Task_Toogle_BOOT", 4096, NULL, 2, NULL);
+  */
 }
 
 void loop()
 {
+  /*
   if (check_info_File(1)){
     if (!Wifi_reconnect()){
       Webserver_stop();
@@ -66,8 +73,9 @@ void loop()
     handleDNS();
   }
   Webserver_reconnect();
+  */
 
-  vTaskDelay(pdMS_TO_TICKS(10));
+  vTaskDelay(pdMS_TO_TICKS(1000));
 }
 
 
