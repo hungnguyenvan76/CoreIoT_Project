@@ -24,7 +24,11 @@ constexpr std::array<const char *, 2U> SHARED_ATTRIBUTES_LIST = {
     AI_WARNING_ATTR,
 };
 
-// Function to handle the property if Board 2 loses network connection and then regains it
+// -----------------------------------------------------------------------------
+// Callback function: Process Shared Attributes updates from the CoreIoT Cloud.
+// This is critical for recovering the state of Board 2 if it loses network connection
+// and later reconnects, ensuring it receives the last known AI warning state.
+// -----------------------------------------------------------------------------
 void processSharedAttributes(const Shared_Attribute_Data &data)
 {
     for (auto it = data.begin(); it != data.end(); ++it)
@@ -41,7 +45,12 @@ void processSharedAttributes(const Shared_Attribute_Data &data)
     }
 }
 
-RPC_Response setNeoWarningValue(const RPC_Data &data)
+// -----------------------------------------------------------------------------
+// RPC Callback: Handle "setNeoWarning" commands triggered by the Cloud Rulechain.
+// This executes on Board 2 (Neo Actuator Node) to translate String warnings into
+// state integers, which are then overwritten into the aiQueue for the LED task.
+// -----------------------------------------------------------------------------
+RPC_Response setNeoWarning(const RPC_Data &data)
 {
     String warningType = data;
     Serial.println("[RPC] Receive alert commands from the Cloud: " + warningType);
@@ -69,12 +78,16 @@ RPC_Response setLedSwitchValue(const RPC_Data &data)
 
 const std::array<RPC_Callback, 2U> callbacks = {
     RPC_Callback{"setLedSwitchValue", setLedSwitchValue},
-    RPC_Callback{"setNeoWarning", setNeoWarningValue}
+    RPC_Callback{"setNeoWarning", setNeoWarning}
 };
 
 const Shared_Attribute_Callback attributes_callback(&processSharedAttributes, SHARED_ATTRIBUTES_LIST.cbegin(), SHARED_ATTRIBUTES_LIST.cend());
 const Attribute_Request_Callback attribute_shared_request_callback(&processSharedAttributes, SHARED_ATTRIBUTES_LIST.cbegin(), SHARED_ATTRIBUTES_LIST.cend());
 
+// -----------------------------------------------------------------------------
+// Helper Function: Send Data to CoreIoT.
+// Wrapper function to send either Telemetry (time-series data) or Attributes.
+// -----------------------------------------------------------------------------
 void CORE_IOT_sendata(String mode, String feed, String data)
 {
     if (mode == "attribute")
@@ -91,6 +104,11 @@ void CORE_IOT_sendata(String mode, String feed, String data)
     }
 }
 
+// -----------------------------------------------------------------------------
+// Connection Manager: Handle MQTT Broker Reconnection & Subscriptions.
+// This function ensures the device maintains connection, sends its IP/MAC,
+// and subscribes to required RPCs and Shared Attributes dynamically.
+// -----------------------------------------------------------------------------
 void CORE_IOT_reconnect()
 {
     if (!tb.connected())
@@ -131,6 +149,11 @@ void CORE_IOT_reconnect()
     }
 }
 
+// -----------------------------------------------------------------------------
+// FreeRTOS Task: Publish Telemetry Data periodically to CoreIoT.
+// Peeks data from both sensorQueue (Temp/Hum) and aiQueue (TinyML predictions)
+// without consuming it, allowing other local tasks to also read the data.
+// -----------------------------------------------------------------------------
 void Task_CoreIOT_Publish(void *pvParameters){
     QueueHandle_t queue = (QueueHandle_t)pvParameters;
     SensorData_t receivedData;

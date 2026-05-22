@@ -22,7 +22,7 @@ void handleWebSocketMessage(String message)
         String CORE_IOT_SERVER = doc["value"]["server"].as<String>();
         String CORE_IOT_PORT = doc["value"]["port"].as<String>();
 
-        Serial.println("📥 Nhận cấu hình từ WebSocket:");
+        Serial.println("Received configuration from WebSocket:");
         Serial.println("SSID: " + WIFI_SSID);
         Serial.println("PASS: " + WIFI_PASS);
         Serial.println("TOKEN: " + CORE_IOT_TOKEN);

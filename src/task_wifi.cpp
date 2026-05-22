@@ -35,7 +35,7 @@ void startSTA()
     {
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
-    //Give a semaphore here
+    // Release the semaphore to notify other tasks (e.g., MQTT, CoreIoT) that the Internet is available
     xSemaphoreGive(xBinarySemaphoreInternet);
     Serial.println(WiFi.localIP());
 }

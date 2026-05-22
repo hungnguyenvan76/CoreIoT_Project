@@ -27,6 +27,7 @@ void neo_blinky(void *pvParameters){
         }
 
         #if is_board_1 // BOARD 1 RUNS NORMALLY
+        // PRIORITY 1: WEBSOCKET OVERRIDE (Manual Control)
         if (wsState.isManual) {
             if (wsState.isOn) {
                 if (led_is_on) strip.setPixelColor(0, strip.Color(wsState.r, wsState.g, wsState.b));
@@ -40,20 +41,20 @@ void neo_blinky(void *pvParameters){
                 vTaskDelay(pdMS_TO_TICKS(100)); // AI
             }
         }
-        // NHÁNH ƯU TIÊN: CẢNH BÁO TỪ AI
+        // PRIORITY 2: AI CRITICAL WARNINGS
         else if (ai_state == 2) { // MOLD_RISK
-            // Double Blink (Xanh dương)
+            // Double Blink (Blue) for MOLD_RISK
             strip.setPixelColor(0, strip.Color(0, 0, 255)); strip.show(); vTaskDelay(pdMS_TO_TICKS(150));
             strip.setPixelColor(0, strip.Color(0, 0, 0));   strip.show(); vTaskDelay(pdMS_TO_TICKS(150));
             strip.setPixelColor(0, strip.Color(0, 0, 255)); strip.show(); vTaskDelay(pdMS_TO_TICKS(150));
             strip.setPixelColor(0, strip.Color(0, 0, 0));   strip.show(); vTaskDelay(pdMS_TO_TICKS(800));
         }
         else if (ai_state == 3) { // SENSOR_ERROR
-            // Cảnh báo chớp Đỏ cực nhanh
+            // Ultra-fast Red blinking for SENSOR_ERROR
             strip.setPixelColor(0, strip.Color(255, 0, 0)); strip.show(); vTaskDelay(pdMS_TO_TICKS(80));
             strip.setPixelColor(0, strip.Color(0, 0, 0));   strip.show(); vTaskDelay(pdMS_TO_TICKS(80));
         }
-        else { // NHÁNH MẶC ĐỊNH: Tất cả sẽ nháy Xanh Lá với chu kỳ theo độ ẩm
+        else { // PRIORITY 3: DEFAULT BEHAVIOR (Green blinking based on humidity)
             if (xQueuePeek(queue, &receivedData, 0) == pdTRUE) {
                 current_humidity = receivedData.humidity;
                 current_color = strip.Color(100, 255, 100);

@@ -11,11 +11,11 @@ namespace
     constexpr int kTensorArenaSize = 16 * 1024; // Adjust size based on your model
     uint8_t tensor_arena[kTensorArenaSize];
 
-    // RING BUFFER FOR TIME-SERIES
+    // RING BUFFER FOR TIME-SERIES DATA
     constexpr int WINDOW_SIZE = 10;
     constexpr int NUM_FEATURES = 2;
-    float ring_buffer[WINDOW_SIZE][NUM_FEATURES] = {0}; // Mảng 2 chiều lưu lịch sử
-    int data_count = 0; // Biến đếm số điểm dữ liệu đã thu thập
+    float ring_buffer[WINDOW_SIZE][NUM_FEATURES] = {0}; // 2D array to store historical window data
+    int data_count = 0; // Counter for collected data points
 } // namespace
 
 void setupTinyML()
@@ -59,32 +59,32 @@ void tiny_ml_task(void *pvParameters)
     while (1){
         if(sensorQueue && xQueuePeek(sensorQueue, &receivedData, 0) == pdPASS) {
             if(receivedData.temperature == -1 && receivedData.humidity == -1) {
-                //Serial.println("[AI] Sensor Error Detected! Skipping inference.");
+                // If sensor read failed, assign dummy extreme values to trigger ERROR model detection
                 receivedData.temperature = 999.0;
                 receivedData.humidity = -999.0;
             } 
             
-            // Dịch toàn bộ dữ liệu lịch sử sang trái 1 ô
+            // Shift all historical data to the left by 1 position (Sliding window logic)
             for (int i = 0; i < WINDOW_SIZE - 1; i++) {
                 ring_buffer[i][0] = ring_buffer[i + 1][0];
                 ring_buffer[i][1] = ring_buffer[i + 1][1];
             }
             
-            // Chèn dữ liệu mới nhất vào ô cuối cùng
+            // Insert the newest data point at the end of the buffer
             ring_buffer[WINDOW_SIZE - 1][0] = receivedData.temperature;
             ring_buffer[WINDOW_SIZE - 1][1] = receivedData.humidity;
-            if (data_count < WINDOW_SIZE) data_count++; // Tăng biến đếm (Tối đa bằng 10)
+            if (data_count < WINDOW_SIZE) data_count++; // Increment counter (Cap at WINDOW_SIZE)
             
-            // Đủ dữ liệu chuỗi thời gian, bắt đầu chạy AI
+            // Once we have enough time-series data, start AI inference
             if (data_count == WINDOW_SIZE) {
-                // Trải phẳng mảng 2 chiều (10x2) vào Input Tensor 1 chiều (20 điểm)
+                // Flatten the 2D array (10x2) into a 1D Input Tensor (20 elements)
                 int tensor_idx = 0;
                 for (int i = 0; i < WINDOW_SIZE; i++) {
                     input->data.f[tensor_idx++] = ring_buffer[i][0];
                     input->data.f[tensor_idx++] = ring_buffer[i][1];
                 }
 
-                // Chạy AI
+                // Execute Inference
                 TfLiteStatus invoke_status = interpreter->Invoke();
                 if (invoke_status != kTfLiteOk) {
                     Serial.println("[AI] Invoke failed!");
@@ -92,7 +92,7 @@ void tiny_ml_task(void *pvParameters)
                     float max_confidence = -100.0;
                     int predicted_class = 0;
                     
-                    // Quét 5 class để tìm xác suất cao nhất
+                    // Scan the 5 output classes to find the highest probability (Softmax equivalent logic)
                     for(int i = 0; i < 5; i++) {
                         float confidence = output->data.f[i];
                         if(confidence > max_confidence) {
@@ -113,13 +113,13 @@ void tiny_ml_task(void *pvParameters)
                     String aiMsg = "[AI] Predict: " + class_name + " (Confidence: " + String(max_confidence * 100, 0) + "%)";
                     Serial.println(aiMsg);
 
-                    // GHI KẾT QUẢ VÀO aiQueue
+                    // OVERWRITE RESULT TO aiQueue FOR OTHER TASKS TO READ
                     if (aiQueue != NULL){
                         xQueueOverwrite(aiQueue, &predicted_class);
                     }
                 }
             } else{
-                Serial.printf("[AI] Đang gom dữ liệu chuỗi thời gian... (%d/%d)\n", data_count, WINDOW_SIZE);
+                Serial.printf("[AI] Collecting time-series data... (%d/%d)\n", data_count, WINDOW_SIZE);
             }
     
         vTaskDelay(pdMS_TO_TICKS(5000));
@@ -143,7 +143,7 @@ void evaluate_tinyml_task(void *pvParameters) {
     int correct_predictions[5] = {0};
     int total_predictions[5] = {0};
     int confusion_matrix[5][5] = {0};
-    uint64_t total_inference_time = 0; // Microseconds
+    uint64_t total_inference_time = 0;
 
     String class_names[5] = {"NORMAL", "FIRE_RISK", "MOLD_RISK", "SENSOR_ERROR", "HVAC_ON"};
 
@@ -157,25 +157,25 @@ void evaluate_tinyml_task(void *pvParameters) {
             // Generate synthetic data
             float T_base, H_base, T_slope = 0, H_slope = 0;
             switch(cls) {
-                case 0: // NORMAL - Push to boundaries with high noise
+                case 0: // NORMAL
                     T_base = generate_random(25.0, 37.0); 
                     H_base = generate_random(54.0, 76.0); 
                     break;
-                case 1: // FIRE_RISK - Sudden exponential-like jump
+                case 1: // FIRE_RISK
                     T_base = generate_random(29.0, 36.0); 
                     T_slope = generate_random(1.0, 2.5);
                     H_base = generate_random(35.0, 50.0);
                     H_slope = generate_random(2.0, 4.0);
                     break;
-                case 2: // MOLD_RISK - Extremely high humidity
+                case 2: // MOLD_RISK
                     T_base = generate_random(20.0, 36.0);
                     H_base = generate_random(85.0, 98.0);
                     break;
-                case 3: // SENSOR_ERROR - Stuck values or huge jumps
+                case 3: // SENSOR_ERROR
                     T_base = generate_random(-20.0, 100.0);
                     H_base = generate_random(0.0, 100.0);
                     break;
-                case 4: // HVAC_ON - Start hot, rapid drop, then stable
+                case 4: // HVAC_ON
                     T_base = generate_random(28.0, 32.0);
                     H_base = generate_random(60.0, 70.0);
                     break;
@@ -317,6 +317,5 @@ void evaluate_tinyml_task(void *pvParameters) {
     }
     Serial.println("==================================================");
 
-    // Stop task
     vTaskDelete(NULL);
 }

@@ -22,7 +22,7 @@ void led_blinky(void *pvParameters){
             xQueuePeek(wsLedQueue, &wsState, 0);
     }
         
-    // PRIORITY 1: WEBSOCKET OVERRIDE
+    // PRIORITY 1: WEBSOCKET OVERRIDE (Manual Control)
     if (wsState.isManual) {
         if (wsState.isOn) {
             if (led_is_on) digitalWrite(LED_GPIO, HIGH);
@@ -35,21 +35,21 @@ void led_blinky(void *pvParameters){
         }
 
     }
-    // NHÁNH ƯU TIÊN: CẢNH BÁO TỪ AI
+    // PRIORITY 2: AI CRITICAL WARNINGS
     else if (ai_state == 1) { // FIRE_RISK
-        // Chớp nháy liên tục
+        // Continuous rapid blinking for FIRE_RISK
         digitalWrite(LED_GPIO, HIGH); vTaskDelay(pdMS_TO_TICKS(50));
         digitalWrite(LED_GPIO, LOW);  vTaskDelay(pdMS_TO_TICKS(50));
     }
     else if (ai_state == 3) { // SENSOR_ERROR
-        // Nháy mã SOS (3 nháy nhanh, nghỉ lâu)
+        // SOS blinking pattern for SENSOR_ERROR (3 rapid blinks, long pause)
         for(int i = 0; i < 3; i++) {
             digitalWrite(LED_GPIO, HIGH); vTaskDelay(pdMS_TO_TICKS(100));
             digitalWrite(LED_GPIO, LOW);  vTaskDelay(pdMS_TO_TICKS(100));
         }
-        vTaskDelay(pdMS_TO_TICKS(600)); // Nghỉ giữa các nhịp SOS
+        vTaskDelay(pdMS_TO_TICKS(600)); // Pause between SOS cycles
     }
-    else { // NHÁNH MẶC ĐỊNH (Áp dụng khi AI = -1, 0, 2, 4)
+    else { // PRIORITY 3: DEFAULT BEHAVIOR (Applied when AI = -1, 0, 2, 4)
         if (xQueuePeek(queue, &receivedData, 0) == pdTRUE) {
             current_temperature = receivedData.temperature;
             if (current_temperature >= 32.0) {

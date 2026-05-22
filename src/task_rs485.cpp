@@ -1,3 +1,10 @@
+/*
+ * ============================================================================
+ * DEPRECATED: This file (task_rs485.cpp) is no longer used in the project.
+ * The system now relies entirely on I2C (DHT20) and WiFi/MQTT for communication.
+ * Kept for historical reference only.
+ * ============================================================================
+ *
 #include "task_rs485.h"
 
 HardwareSerial RS485Serial(1);
@@ -142,3 +149,4 @@ void tasksensor_init()
     xTaskCreate(Task_Read_Sensor, "Task_Read_Sensor", 4096, NULL, 1, NULL);
     xTaskCreate(Task_Send_data, "Task_Send_data", 4096, NULL, 1, NULL);
 }
+*/

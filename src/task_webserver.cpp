@@ -54,7 +54,7 @@ void connnectWSV()
               { request->send(LittleFS, "/styles.css", "text/css"); });
     server.begin();
 
-    // Implement captive portal: redirect all DNS queries to the local web server
+    // Implement Captive Portal: Redirect all unknown DNS queries to the local Web Server root
     server.onNotFound([](AsyncWebServerRequest *request) {
         request->redirect("/");
     });

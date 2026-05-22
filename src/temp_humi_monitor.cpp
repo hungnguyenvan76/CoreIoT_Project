@@ -13,7 +13,7 @@ void temp_humi_monitor(void *pvParameters){
     lcd.clear();        // Clear console
     lcd.setCursor(0, 0); 
     
-    // Read temp & humi 
+    // Data structures for cross-task communication
     QueueHandle_t queue = (QueueHandle_t)pvParameters;
     SensorData_t data; 
 
@@ -38,13 +38,14 @@ void temp_humi_monitor(void *pvParameters){
         }
 
         lcd.setCursor(0, 0);
-        lcd.print(data.temperature, 1); // 25.4
+        lcd.print(data.temperature, 1);
         lcd.print(" *C");  
         lcd.setCursor(8, 0);
         lcd.print(data.humidity, 1);
         lcd.print(" %  ");
         lcd.setCursor(0, 1);
-
+        
+        // Display AI warning state on LCD
         if(ai_state == -1) {
             lcd.print("COLLECTING DATA!");
         } else if (ai_state == 0){
@@ -59,10 +60,10 @@ void temp_humi_monitor(void *pvParameters){
             lcd.print("STATE: AC ON    ");
         }
 
-        // Write into Queue
+        // OVERWRITE data into FreeRTOS Queue for AI and Cloud tasks
         xQueueOverwrite(queue, &data);
 
-        // Send data to Webserver
+        // BROADCAST JSON data to local WebServer via WebSockets
         String jsonData = "{\"temperature\": " + String(data.temperature) + 
                         ", \"humidity\": "   + String(data.humidity)    + 
                         ", \"ai_state\": "   + String(ai_state)         + "}";

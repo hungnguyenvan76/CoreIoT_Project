@@ -1,3 +1,10 @@
+/*
+ * ============================================================================
+ * DEPRECATED: This file (coreiot.cpp) is the old version of the CoreIoT task.
+ * It has been replaced by the new implementation in task_core_iot.cpp.
+ * Do not use or compile this file. It is kept for historical reference only.
+ * ============================================================================
+ *
 #include "coreiot.h"
 
 // ----------- CONFIGURE THESE! -----------
@@ -137,3 +144,4 @@ void coreiot_task(void *pvParameters){
         vTaskDelay(10000);  // Publish every 10 seconds
     }
 }
+*/
